@@ -16,3 +16,5 @@ old_code/
 Data/
 **/__pycache__/
 **/.venv/
+ExecuteStage/user_data_test
+ExecuteStage/user_data_20000

@@ -59,7 +59,7 @@ def send_email(config):
             smtp_server.quit()
         except:
             pass
-  
+
 def rename_downloaded_file(download_dir, stop_event):
     original_files = set(os.listdir(download_dir))
 
@@ -199,7 +199,6 @@ def detect_optimizable(param, ignoreWaitElement=True, waitElement=""):
         return False
 
 
-
 def download_image(browser, url, save_directory, element=None):
     # 定义浏览器头信息
     headers = {
@@ -297,7 +296,7 @@ def new_line(outputParameters, maxViewLength, record):
     i = 0
     for value in outputParameters.values():
         line.append(value)
-        if record[i]:
+        if i < len(record) and record[i]:
             print(value[:maxViewLength], " ", end="")
         i += 1
     print("")
@@ -310,10 +309,11 @@ def write_to_csv(file_name, data, record):
         for line in data:
             to_write = []
             for i in range(len(line)):
-                if record[i]:
+                if i < len(record) and record[i]:
                     to_write.append(line[i])
             f_csv.writerow(to_write)
         f.close()
+
 
 def replace_field_values(orginal_text, outputParameters, browser=None):
     pattern = r'Field\["([^"]+)"\]'
@@ -561,27 +561,35 @@ class myMySQL:
                 config_file = os.path.expanduser(
                     "~/Library/Application Support/EasySpider/" + config_file)
             print("MySQL config file path: ", config_file)
-            with open(config_file, 'r') as f:
-                config = json.load(f)
-                self.host = config["host"]
-                self.port = config["port"]
-                self.username = config["username"]
-                self.password = config["password"]
-                self.db = config["database"]
+            # with open(config_file, 'r') as f:
+            #     config = json.load(f)
+            #     self.host = config["host"]
+            #     self.port = config["port"]
+            #     self.username = config["username"]
+            #     self.password = config["password"]
+            #     self.db = config["database"]
+
+            self.host = "127.0.0.1"
+            self.port = 3306
+            self.username = "root"
+            self.password = "5tgbNHY^&UJM"
+            self.db = "helloworld"
+            self.title_be_ignored = False
+            self.table_name = None
         except Exception as e:
             print("读取配置文件失败，请检查配置文件："+config_file+"是否存在，或配置信息是否有误。")
             print("Failed to read configuration file, please check if the configuration file: " +
                   config_file+" exists, or if the configuration information is incorrect.")
             print(e)
         self.connect()
-        
+
     def connect(self):
         try:
             self.conn = pymysql.connect(
                 host=self.host, port=self.port, user=self.username, passwd=self.password, db=self.db)
             print("成功连接到数据库。")
             print("Successfully connected to the database.")
-        except:
+        except Exception as e:
             print("连接数据库失败，请检查配置文件是否正确。")
             print(
                 "Failed to connect to the database, please check if the configuration file is correct.")
@@ -747,6 +755,107 @@ class myMySQL:
         except:
             print("关闭数据库失败。")
             print("Failed to close the database.")
-    
+
     def __del__(self):
         self.close()
+
+    def create_my_table(self, table_name):
+        sql = f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+        ID VARCHAR(128) PRIMARY KEY,
+        name VARCHAR(128),
+        username VARCHAR(128),
+        time DATETIME,
+        content TEXT,
+        reply INT,
+        repost INT,
+        like1 INT,
+        view INT
+        );
+        """
+        self.cursor = self.conn.cursor()
+        self.cursor.execute(sql)
+        self.cursor.close()
+        self.table_name = table_name
+
+    def convert_str_to_number(self, s):
+        s = s.lower()  # 统一转小写
+        try:
+            if 'k' in s:
+                return int(float(s.replace("k", "")) * 1_000)
+            elif 'm' in s:
+                return int(float(s.replace('m', '')) * 1_000_000)
+            elif 'b' in s:
+                return int(float(s.replace("b", "")) * 1_000_000_000)
+            return int(s)  # 直接是数字
+        except Exception as e:
+            print(e)
+
+    def write_to_my_mysql(self, OUTPUT, record, types):
+        if not self.table_name:
+            return
+
+        if not self.title_be_ignored:
+            OUTPUT.pop(0)
+            self.title_be_ignored = True
+
+        # 创建一个游标对象
+        self.cursor = self.conn.cursor()
+
+        to_write = []
+        for line in OUTPUT:
+            dataStr = line[6]
+            dataStr = dataStr.replace("T", " ").replace(".000Z", "")
+            one_write = (
+                line[3],
+                line[4],
+                line[5],
+                dataStr,
+                line[7],
+                self.convert_str_to_number(line[8]),
+                self.convert_str_to_number(line[9]),
+                self.convert_str_to_number(line[10]),
+                self.convert_str_to_number(line[11]),
+            )
+            to_write.append(one_write)
+
+        sql = f"""
+        INSERT INTO {self.table_name} (ID, name, username, time, content, reply, repost, like1, view)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE
+            reply = VALUES(reply),
+            repost = VALUES(repost),
+            like1 = VALUES(like1),
+            view = VALUES(view);
+        """
+
+        try:
+            self.cursor.executemany(sql, to_write)
+        except pymysql.OperationalError as e:
+            print("Error:", e)
+            print("Try to reconnect to the database...")
+            self.connect()
+            self.cursor = self.conn.cursor()  # 重新创建游标对象
+            self.cursor.executemany(sql, to_write)  # 重新执行SQL语句
+            # self.write_to_mysql(OUTPUT, record, types)
+        except Exception as e:
+            print("Error:", e)
+            print("Error SQL:", sql, to_write)
+            print(
+                "插入数据库错误，请查看以上的错误提示，然后检查数据的类型是否正确，是否文本过长（超过一万的文本类型要设置为大文本）。"
+            )
+            print(
+                "Inserting database error, please check the above error, and then check whether the data type is correct, whether the text is too long (text type over 10,000 should be set to large text)."
+            )
+            print("重新执行任务时，请删除数据库中的数据表" + self.table_name + "，然后再次运行程序。")
+            print(
+                "When re-executing the task, please delete the data table "
+                + self.table_name
+                + " in the database, and then run the program again."
+            )
+
+        # 提交到数据库执行
+        self.conn.commit()
+
+        # 关闭游标和连接
+        self.cursor.close()
