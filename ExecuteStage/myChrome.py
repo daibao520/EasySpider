@@ -214,7 +214,7 @@ class MyChrome(webdriver.Chrome):
                         level: {cdp_params["batteryLevel"]},
                         charging: {cdp_params["charging"]},
                         chargingTime: {cdp_params.get("chargingTime", "Infinity")},
-                        dischargingTime: {cdp_params["dischargingTime"]}
+                        dischargingTime: {cdp_params.get("dischargingTime", "Infinity")}
                     }}),
                     configurable: false
                 }});

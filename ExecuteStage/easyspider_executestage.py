@@ -235,6 +235,7 @@ class BrowserThread(Thread):
         else:
             self.links = list(filter(isnotnull, service["url"]))  # 要执行的link
 
+        self.OUTPUTKEYS = []
         self.OUTPUT = []  # 采集的数据
         if self.outputFormat in ["csv", "txt", "xlsx", "json"]:
             if os.path.exists("Data/Task_" + str(self.id) + "/" + self.saveName + "." + self.outputFormat):
@@ -297,7 +298,7 @@ class BrowserThread(Thread):
 
             # self.my_queries = config["queries"]
             self.my_queries = my_queries
-            now = now - timedelta(days=5)
+            # now = now - timedelta(days=5)
             date_str = now.strftime("%Y-%m-%d")
             for one_query in self.my_queries:
                 query_str = f"#{one_query} OR @{one_query} since:{date_str} -filter:replies \n"
@@ -671,7 +672,7 @@ class BrowserThread(Thread):
                         output_line[6] = time_str
                         output_line[3] = output_line[5] + "_" + time_str
                 # write_to_csv(file_name, self.OUTPUT, self.outputParametersRecord)
-                self.mysql.write_to_my_mysql(self.OUTPUT, self.outputParametersRecord, self.outputParametersTypes)
+                self.mysql.write_to_my_mysql(self.OUTPUT, self.outputParametersRecord, self.outputParametersTypes, self.OUTPUTKEYS)
             elif self.outputFormat == "xlsx":
                 file_name = "Data/Task_" + str(self.id) + "/" + self.saveName + ".xlsx"
                 write_to_excel(file_name, self.OUTPUT, self.outputParametersTypes, self.outputParametersRecord)
@@ -2323,6 +2324,8 @@ class BrowserThread(Thread):
         self.OUTPUT.append(line)
 
     def add_mysql_table(self):
+        self.OUTPUTKEYS.clear()
+
         if not hasattr(self, "mysql"):
             self.mysql = myMySQL()
 
@@ -2331,14 +2334,26 @@ class BrowserThread(Thread):
 
         self.mysql.create_my_table(self.my_queries[self.my_query_index - 1])
 
-
-def get_my_user_info(user_id):
+def get_fingerprint(user_id):
     auth_id = "id-bots-user-001"
     auth_token= "a5ea0cd0-451c-4388-8b2f-b39176d963f5"
     url = f"https://coin.geyigame.cn/api/user/{user_id}"
     headers = {"x-auth-id": auth_id, "x-auth-token": auth_token}
     content = requests.get(url=url, headers=headers).json()
     return content
+
+def get_proxy(user_id):
+    content = requests.get(url=f"http://127.0.0.1:34001/rest/spider/userInfo?userId={user_id}").json()
+    return content
+
+def get_my_user_info(user_id):
+    my_user_info = get_fingerprint(user_id)
+    if len(c.proxy) == 0:
+        u_info = get_proxy(user_id)
+        if u_info != None:
+            proxy = u_info.get("proxy")
+            my_user_info["result"]["proxy"] = proxy
+    return my_user_info
 
 
 if __name__ == "__main__":
@@ -2436,7 +2451,6 @@ if __name__ == "__main__":
                 user_data_folder = f"{temp_folder}_{c.user_id}"
                 absolute_user_data_folder = os.path.join(os.getcwd(), user_data_folder)
                 my_user_info = get_my_user_info(c.user_id)
-                my_user_info["result"]["proxy"] = c.proxy
             else:
                 absolute_user_data_folder = config["absolute_user_data_folder"]
     except:

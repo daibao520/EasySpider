@@ -791,7 +791,7 @@ class myMySQL:
         except Exception as e:
             print(e)
 
-    def write_to_my_mysql(self, OUTPUT, record, types):
+    def write_to_my_mysql(self, OUTPUT, record, types, OUTPUTKEYS):
         if not self.table_name:
             return
 
@@ -804,6 +804,10 @@ class myMySQL:
 
         to_write = []
         for line in OUTPUT:
+            key = line[3]
+            if key in OUTPUTKEYS:
+                continue
+
             dataStr = line[6]
             dataStr = dataStr.replace("T", " ").replace(".000Z", "")
             one_write = (
@@ -818,6 +822,8 @@ class myMySQL:
                 self.convert_str_to_number(line[11]),
             )
             to_write.append(one_write)
+
+            OUTPUTKEYS.append(key)
 
         sql = f"""
         INSERT INTO {self.table_name} (ID, name, username, time, content, reply, repost, like1, view)

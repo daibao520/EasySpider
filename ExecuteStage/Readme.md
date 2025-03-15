@@ -40,7 +40,7 @@ This section covers the compilation instructions for the `Execution stage progra
 1. 安装Python 3.7及以上版本并添加至系统环境变量：[https://www.python.org/downloads/](https://www.python.org/downloads/)。
 2. 安装`pip3`并添加至系统环境变量（Windows安装python后会自带pip，Linux和MacOS安装方式请自行搜索）。
 3. 安装执行阶段需要的依赖库：
-   
+
    ```sh
     pip3 install -r requirements.txt
    ```
@@ -50,7 +50,7 @@ This section covers the compilation instructions for the `Execution stage progra
 1. Install Python 3.7 or higher version and add it to the system environment variables: [https://www.python.org/downloads/](https://www.python.org/downloads/).
 2. Install pip3 and add it to the system environment variables. (On Windows, pip is automatically installed with Python. For Linux and macOS, please refer to the appropriate installation instructions).
 3. Install the required dependencies for the execution stage by running:
-   
+
     ```sh
     pip3 install -r requirements.txt
     ```
@@ -96,3 +96,9 @@ Windows x64直接运行`generateEXE_win64.cmd`即可把执行阶段程序打包�
 To execute the program by simply clicking the `Directly Run Locally` button in the main program, you will need to package the program into an executable file.
 
 For Windows x64, you can run the `generateEXE_win64.cmd` script. This script will package the execution stage program into an .exe file and automatically copy it to the `../ElectronJS/chrome_win64/` directory. The process for other systems is similar.
+
+
+## 修改
+1. 打包用generateEXE_win642.cmd里的命令
+2. 将dist中的easyspider_executestage.exe拷贝到SpiderNode\MySpider文件夹下
+3. 将seleniumwire-ca.pem和seleniumwire-dhparam.pem拷贝到\Users\xxxx\AppData\Local\Temp\.seleniumwire\文件夹下
