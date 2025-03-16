@@ -2353,6 +2353,8 @@ def get_my_user_info(user_id):
         if u_info != None:
             proxy = u_info.get("proxy")
             my_user_info["result"]["proxy"] = proxy
+    else:
+        my_user_info["result"]["proxy"] = c.proxy
     return my_user_info
 
 
