@@ -2376,7 +2376,7 @@ if __name__ == "__main__":
         "docker_driver": "",
         "user_folder": "",
         "user_id": "",
-        "queries": "bitcoin",
+        "queries": "ORANGELAD",
         "proxy": ""
     }
     c = Config(commandline_config)
