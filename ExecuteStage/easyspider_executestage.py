@@ -235,6 +235,7 @@ class BrowserThread(Thread):
         else:
             self.links = list(filter(isnotnull, service["url"]))  # 要执行的link
 
+        self.user_state = 0
         self.OUTPUTKEYS = []
         self.OUTPUT = []  # 采集的数据
         if self.outputFormat in ["csv", "txt", "xlsx", "json"]:
@@ -611,6 +612,10 @@ class BrowserThread(Thread):
         self.print_and_log(
             f"The task is completed, the browser will exit automatically and the temporary user directory will be cleaned up after {quitWaitTime} seconds, the waiting time can be set in the save task dialog."
         )
+
+        if global_use_my_sloution:
+            self.send_user_state(0)
+
         time.sleep(quitWaitTime)
         try:
             self.browser.quit()
@@ -2333,6 +2338,14 @@ class BrowserThread(Thread):
             self.saveData()
 
         self.mysql.create_my_table(self.my_queries[self.my_query_index - 1])
+
+    def send_user_state(self, state):
+        if self.user_state == 1:
+            return
+        self.user_state = state
+        user_id = self.commandline_config["user_id"]
+        requests.get(url=f"http://127.0.0.1:34001/rest/spider/sendUserState?userId={user_id}&state={state}")
+        return
 
 def get_fingerprint(user_id):
     auth_id = "id-bots-user-001"
