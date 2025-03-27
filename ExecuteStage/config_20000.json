@@ -1,0 +1,17 @@
+{
+  "webserver_address": "http://localhost",
+  "webserver_port": 8074,
+  "user_data_folder": "user_data",
+  "debug": false,
+  "copyright": 1,
+  "sys_version": "x64",
+  "mysql_config_path": "./mysql_config.json",
+  "absolute_user_data_folder": "D:\\Documents\\Projects\\EasySpider\\ElectronJS\\user_data",
+  "lang": "zh",
+
+  "auth_id": "id-bots-user-001",
+  "auth_token": "a5ea0cd0-451c-4388-8b2f-b39176d963f5",
+  "x_id": "abcd",
+  "x_password": "2222",
+  "queries": ["ORANGELAD", "EHHH"]
+}
