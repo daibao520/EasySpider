@@ -574,7 +574,6 @@ class myMySQL:
             self.username = "root"
             self.password = "5tgbNHY^&UJM"
             self.db = "helloworld"
-            self.title_be_ignored = False
             self.table_name = None
         except Exception as e:
             print("读取配置文件失败，请检查配置文件："+config_file+"是否存在，或配置信息是否有误。")
@@ -770,7 +769,8 @@ class myMySQL:
         reply INT,
         repost INT,
         like1 INT,
-        view INT
+        view INT,
+        link VARCHAR(128)
         );
         """
         self.cursor = self.conn.cursor()
@@ -795,10 +795,6 @@ class myMySQL:
         if not self.table_name:
             return
 
-        if not self.title_be_ignored:
-            OUTPUT.pop(0)
-            self.title_be_ignored = True
-
         # 创建一个游标对象
         self.cursor = self.conn.cursor()
 
@@ -820,14 +816,15 @@ class myMySQL:
                 self.convert_str_to_number(line[9]),
                 self.convert_str_to_number(line[10]),
                 self.convert_str_to_number(line[11]),
+                line[13],
             )
             to_write.append(one_write)
 
             OUTPUTKEYS.append(key)
 
         sql = f"""
-        INSERT INTO {self.table_name} (ID, name, username, time, content, reply, repost, like1, view)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO {self.table_name} (ID, name, username, time, content, reply, repost, like1, view, link)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
             reply = VALUES(reply),
             repost = VALUES(repost),

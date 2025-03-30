@@ -108,7 +108,7 @@ desired_capabilities["pageLoadStrategy"] = "none"
 
 
 class BrowserThread(Thread):
-    def __init__(self, browser_t, id, service, version, event, saveName, config, option, commandline_config="", my_queries=[]):
+    def __init__(self, browser_t, id, service, version, event, saveName, config, option, commandline_config="", my_queries=[], my_tables=[]):
         Thread.__init__(self)
         self.logs = io.StringIO()
         self.log = bool(service.get("recordLog", True))
@@ -294,15 +294,18 @@ class BrowserThread(Thread):
                     self.OUTPUT[0].append(param["name"])
 
         if global_use_my_sloution:
+            self.OUTPUT.pop(0)
             self.my_query_index = 0
             self.my_query_infos = []
 
             # self.my_queries = config["queries"]
             self.my_queries = my_queries
-            # now = now - timedelta(days=5)
+            self.my_tables = my_tables
+            # now = now - timedelta(days=1)
             date_str = now.strftime("%Y-%m-%d")
             for one_query in self.my_queries:
-                query_str = f"#{one_query} OR @{one_query} since:{date_str} -filter:replies \n"
+                # query_str = f"#{one_query} OR @{one_query} since:{date_str} -filter:replies \n"
+                query_str = f"{one_query} since:{date_str} -filter:replies \n"
                 self.my_query_infos.append(query_str)
                 print("MY QUERY INFOS:", query_str)
 
@@ -2329,22 +2332,23 @@ class BrowserThread(Thread):
         self.OUTPUT.append(line)
 
     def add_mysql_table(self):
-        self.OUTPUTKEYS.clear()
-
         if not hasattr(self, "mysql"):
             self.mysql = myMySQL()
 
-        if len(self.OUTPUT) > 0:
-            self.saveData()
+        self.mysql.create_my_table(self.my_tables[self.my_query_index - 1])
 
-        self.mysql.create_my_table(self.my_queries[self.my_query_index - 1])
+    def save_and_clear(self):
+        if len(self.OUTPUT) > 0:
+            self.saveData(exit=True)
+        self.OUTPUTKEYS.clear()
 
     def send_user_state(self, state):
         if self.user_state == 1:
             return
         self.user_state = state
         user_id = self.commandline_config["user_id"]
-        requests.get(url=f"http://127.0.0.1:34001/rest/spider/sendUserState?userId={user_id}&state={state}")
+        task_id = self.commandline_config["task_id"]
+        requests.get(url=f"http://127.0.0.1:34001/rest/spider/sendUserState?userId={user_id}&state={state}&taskId={task_id}")
         return
 
 def get_fingerprint(user_id):
@@ -2389,7 +2393,8 @@ if __name__ == "__main__":
         "docker_driver": "",
         "user_folder": "",
         "user_id": "",
-        "queries": "ORANGELAD",
+        "task_id": 0,
+        "queries": "#Agent AND #meme, Agent_meme",
         "proxy": ""
     }
     c = Config(commandline_config)
@@ -2400,9 +2405,13 @@ if __name__ == "__main__":
         time.sleep(5)
         sys.exit()
 
-    my_queries = None
+    my_queries = []
+    my_tables = []
     if len(c.queries) > 0:
-        my_queries = c.queries.split(",")
+        temp_arr = c.queries.split(",")
+        for i in range(int(len(temp_arr) / 2)):
+            my_queries.append(temp_arr[i * 2])
+            my_tables.append(temp_arr[i * 2 + 1])
 
     options = webdriver.ChromeOptions()
     driver_path = "chromedriver.exe"
@@ -2682,6 +2691,7 @@ if __name__ == "__main__":
             option=tmp_options[i],
             commandline_config=c,
             my_queries=my_queries,
+            my_tables=my_tables
         )
         print("Thread with task id: ", id, " is created")
         threads.append(thread)

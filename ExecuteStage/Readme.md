@@ -99,6 +99,6 @@ For Windows x64, you can run the `generateEXE_win64.cmd` script. This script wil
 
 
 ## 修改
-1. 打包用generateEXE_win642.cmd里的命令
+1. 打包用generateEXE_win64_new.cmd里的命令
 2. 将dist中的easyspider_executestage.exe拷贝到SpiderNode\MySpider文件夹下
 3. 将seleniumwire-ca.pem和seleniumwire-dhparam.pem拷贝到\Users\xxxx\AppData\Local\Temp\.seleniumwire\文件夹下
