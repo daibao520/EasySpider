@@ -770,7 +770,8 @@ class myMySQL:
         repost INT,
         like1 INT,
         view INT,
-        link VARCHAR(128)
+        link VARCHAR(128),
+        INDEX idx_time (time)
         );
         """
         self.cursor = self.conn.cursor()

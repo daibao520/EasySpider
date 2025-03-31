@@ -52,7 +52,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from datetime import datetime
+from datetime import datetime, timezone
 import io  # 遇到错误退出时应执行的代码
 import json
 
@@ -119,7 +119,7 @@ class BrowserThread(Thread):
         self.totalSteps = 0
         self.id = id
         self.event = event
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         nowStr = now.strftime("%Y_%m_%d_%H_%M_%S")
         self.saveName = service.get("saveName", nowStr)  # 保存文件的名字
         self.OUTPUT = ""
