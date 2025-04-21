@@ -108,7 +108,20 @@ desired_capabilities["pageLoadStrategy"] = "none"
 
 
 class BrowserThread(Thread):
-    def __init__(self, browser_t, id, service, version, event, saveName, config, option, commandline_config="", my_queries=[], my_tables=[]):
+    def __init__(
+        self,
+        browser_t,
+        id,
+        service,
+        version,
+        event,
+        saveName,
+        config,
+        option,
+        commandline_config="",
+        my_queries=[],
+        my_tables=[],
+    ):
         Thread.__init__(self)
         self.logs = io.StringIO()
         self.log = bool(service.get("recordLog", True))
@@ -669,18 +682,20 @@ class BrowserThread(Thread):
                 for output_line in self.OUTPUT:
                     if output_line[1] == "None" and output_line[2] == "None":
                         time_str_raw = output_line[6]
-                        time_str_index1 = time_str_raw.find("datetime=\"")
-                        time_str_index2 = time_str_raw.find("\">")
+                        time_str_index1 = time_str_raw.find('datetime="')
+                        time_str_index2 = time_str_raw.find('">')
                         time_str = time_str_raw[time_str_index1 + 10 : time_str_index2]
                         if len(time_str) != 24:
                             time_str_raw = output_line[12]
-                            time_str_index1 = time_str_raw.find("datetime=\"")
-                            time_str_index2 = time_str_raw.find("\">")
+                            time_str_index1 = time_str_raw.find('datetime="')
+                            time_str_index2 = time_str_raw.find('">')
                             time_str = time_str_raw[time_str_index1 + 10 : time_str_index2]
                         output_line[6] = time_str
                         output_line[3] = output_line[5] + "_" + time_str
                 # write_to_csv(file_name, self.OUTPUT, self.outputParametersRecord)
-                self.mysql.write_to_my_mysql(self.OUTPUT, self.outputParametersRecord, self.outputParametersTypes, self.OUTPUTKEYS)
+                self.mysql.write_to_my_mysql(
+                    self.OUTPUT, self.outputParametersRecord, self.outputParametersTypes, self.OUTPUTKEYS
+                )
             elif self.outputFormat == "xlsx":
                 file_name = "Data/Task_" + str(self.id) + "/" + self.saveName + ".xlsx"
                 write_to_excel(file_name, self.OUTPUT, self.outputParametersTypes, self.outputParametersRecord)
@@ -2348,30 +2363,41 @@ class BrowserThread(Thread):
         self.user_state = state
         user_id = self.commandline_config["user_id"]
         task_id = self.commandline_config["task_id"]
-        requests.get(url=f"http://127.0.0.1:34001/rest/spider/sendUserState?userId={user_id}&state={state}&taskId={task_id}")
+        requests.get(
+            url=f"http://127.0.0.1:34001/rest/spider/sendUserState?userId={user_id}&state={state}&taskId={task_id}"
+        )
         return
+
 
 def get_fingerprint(user_id):
     auth_id = "id-bots-user-001"
-    auth_token= "a5ea0cd0-451c-4388-8b2f-b39176d963f5"
+    auth_token = "a5ea0cd0-451c-4388-8b2f-b39176d963f5"
     url = f"https://coin.geyigame.cn/api/user/{user_id}"
     headers = {"x-auth-id": auth_id, "x-auth-token": auth_token}
     content = requests.get(url=url, headers=headers).json()
     return content
 
+
 def get_proxy(user_id):
     content = requests.get(url=f"http://127.0.0.1:34001/rest/spider/userInfo?userId={user_id}").json()
     return content
 
-def get_my_user_info(user_id):
+
+def get_my_user_info(user_id, c_proxy):
     my_user_info = get_fingerprint(user_id)
-    if len(c.proxy) == 0:
-        u_info = get_proxy(user_id)
+    if len(c_proxy) == 0:
+        u_info = None
+        try:
+            u_info = get_proxy(user_id)
+        except Exception as e:
+            print("my_user_info error: ", e)
         if u_info != None:
             proxy = u_info.get("proxy")
             my_user_info["result"]["proxy"] = proxy
+        else:
+            my_user_info["result"]["proxy"] = ""
     else:
-        my_user_info["result"]["proxy"] = c.proxy
+        my_user_info["result"]["proxy"] = c_proxy
     return my_user_info
 
 
@@ -2395,7 +2421,7 @@ if __name__ == "__main__":
         "user_id": "",
         "task_id": 0,
         "queries": "#Agent AND #meme, Agent_meme",
-        "proxy": ""
+        "proxy": "",
     }
     c = Config(commandline_config)
     print(c)
@@ -2471,10 +2497,10 @@ if __name__ == "__main__":
             config = json.load(f)
             print("Config file path: " + c.config_folder + c.config_file_name)
             if global_use_my_sloution:
-                temp_folder = config['user_data_folder']
+                temp_folder = config["user_data_folder"]
                 user_data_folder = f"{temp_folder}_{c.user_id}"
                 absolute_user_data_folder = os.path.join(os.getcwd(), user_data_folder)
-                my_user_info = get_my_user_info(c.user_id)
+                my_user_info = get_my_user_info(c.user_id, c.proxy)
             else:
                 absolute_user_data_folder = config["absolute_user_data_folder"]
     except:
@@ -2691,7 +2717,7 @@ if __name__ == "__main__":
             option=tmp_options[i],
             commandline_config=c,
             my_queries=my_queries,
-            my_tables=my_tables
+            my_tables=my_tables,
         )
         print("Thread with task id: ", id, " is created")
         threads.append(thread)
